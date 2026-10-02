@@ -49,12 +49,12 @@ Snowflake: run `snowflake/01_setup.sql`, `02_load_raw.sql`, `airflow/dags/sql/lo
 
 `local/profiles.yml` mirrors these targets for DuckDB. Its `ci` target attaches `analytics.duckdb` read-only so it can test `--defer`.
 
-**Slim CI** (`.github/workflows/dbt_ci.yml`):
+**Slim CI** (`../.github/workflows/dbt_ci.yml`, at the repo root):
 1. On a PR, check out `main` and run `dbt parse --target prod` to get a manifest.
 2. Run `dbt build --target ci --select state:modified+ --defer --state prod-state`.
 3. Always run `drop_ci_schemas` at the end.
 
-The workflow lives inside this subfolder. It only triggers if this folder is the root of its own repo, so on the `blogs-posts` repo GitHub ignores it.
+The workflow sits at the root of the `blogs-posts` repo because GitHub only runs workflows from there. Its steps default to `working-directory: tpch_analytics`, and its path filters are prefixed with `tpch_analytics/`. If you move or rename this folder, update the workflow too.
 
 **Airflow** (`airflow/dags/tpch_daily.py`) runs daily at 02:00 UTC. It runs `sql/load_raw_orders.sql`, which is idempotent because COPY INTO tracks files it has loaded. It then runs a Cosmos `DbtTaskGroup` on the `prod` target. That task group renders from `target/manifest.json` (`LoadMode.DBT_MANIFEST`), so you need a fresh `dbt parse` after model changes. Tests run after each model, and source freshness checks appear as tasks. `DBT_PROJECT_DIR` and `DBT_EXECUTABLE` are read from env vars. Airflow 3.1 needs `sqlalchemy<2.1`.
 

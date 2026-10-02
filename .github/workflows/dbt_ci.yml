@@ -4,12 +4,13 @@ on:
   pull_request:
     branches: [main]
     paths:
-      - "models/**"
-      - "macros/**"
-      - "snapshots/**"
-      - "tests/**"
-      - "dbt_project.yml"
-      - "packages.yml"
+      - "tpch_analytics/models/**"
+      - "tpch_analytics/macros/**"
+      - "tpch_analytics/snapshots/**"
+      - "tpch_analytics/tests/**"
+      - "tpch_analytics/dbt_project.yml"
+      - "tpch_analytics/packages.yml"
+      - ".github/workflows/dbt_ci.yml"
 
 concurrency:
   group: dbt-ci-${{ github.event.pull_request.number }}
@@ -18,12 +19,15 @@ concurrency:
 jobs:
   dbt-build-changed:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: tpch_analytics      # the dbt project lives in this subfolder
     env:
       SNOWFLAKE_ACCOUNT: ${{ secrets.SNOWFLAKE_ACCOUNT }}
       SNOWFLAKE_PRIVATE_KEY_PASSPHRASE: ${{ secrets.SNOWFLAKE_PRIVATE_KEY_PASSPHRASE }}
-      SNOWFLAKE_PRIVATE_KEY_PATH: ${{ github.workspace }}/rsa_key.p8
+      SNOWFLAKE_PRIVATE_KEY_PATH: ${{ github.workspace }}/tpch_analytics/rsa_key.p8
       DBT_CI_SCHEMA: CI_PR_${{ github.event.pull_request.number }}
-      DBT_PROFILES_DIR: ${{ github.workspace }}/ci
+      DBT_PROFILES_DIR: ${{ github.workspace }}/tpch_analytics/ci
 
     steps:
       - name: Check out the pull request
@@ -46,11 +50,11 @@ jobs:
         run: echo "${{ secrets.SNOWFLAKE_PRIVATE_KEY }}" > rsa_key.p8
 
       - name: Build the production manifest from main
-        working-directory: main-branch
+        working-directory: main-branch/tpch_analytics
         run: |
           dbt deps
           dbt parse --target prod
-          cp -r target ../prod-state
+          cp -r target "$GITHUB_WORKSPACE/tpch_analytics/prod-state"
 
       - name: Build and test only what changed
         run: |

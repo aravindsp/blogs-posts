@@ -10,7 +10,7 @@ on [bigdatadwbi.com](https://www.bigdatadwbi.com).
 | `tests/`, `*.yml` | dbt data tests | 6 |
 | `snapshots/` | Customer history (SCD type 2) | 7 |
 | `airflow/` | Daily DAG (COPY INTO, source freshness, then dbt via Astronomer Cosmos) and its requirements | 8 |
-| `ci/`, `.github/workflows/` | Snowflake profiles and the pull-request CI job | 4, 9 |
+| `ci/`, `../.github/workflows/dbt_ci.yml` | Snowflake profiles and the pull-request CI job (the workflow sits at the repo root) | 4, 9 |
 | `macros/` | Schema naming and CI clean-up | 4, 9 |
 | `scripts/dbt_run_report.py` | Failures and slowest nodes from run_results.json | 10 |
 | `local/` | Run everything on DuckDB without a Snowflake account | all |
