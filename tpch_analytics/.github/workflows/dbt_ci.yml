@@ -1,0 +1,62 @@
+name: dbt CI
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "models/**"
+      - "macros/**"
+      - "snapshots/**"
+      - "tests/**"
+      - "dbt_project.yml"
+      - "packages.yml"
+
+concurrency:
+  group: dbt-ci-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  dbt-build-changed:
+    runs-on: ubuntu-latest
+    env:
+      SNOWFLAKE_ACCOUNT: ${{ secrets.SNOWFLAKE_ACCOUNT }}
+      SNOWFLAKE_PRIVATE_KEY_PASSPHRASE: ${{ secrets.SNOWFLAKE_PRIVATE_KEY_PASSPHRASE }}
+      SNOWFLAKE_PRIVATE_KEY_PATH: ${{ github.workspace }}/rsa_key.p8
+      DBT_CI_SCHEMA: CI_PR_${{ github.event.pull_request.number }}
+      DBT_PROFILES_DIR: ${{ github.workspace }}/ci
+
+    steps:
+      - name: Check out the pull request
+        uses: actions/checkout@v4
+
+      - name: Check out main (the production version)
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          path: main-branch
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dbt
+        run: pip install -r requirements.txt
+
+      - name: Write the Snowflake private key
+        run: echo "${{ secrets.SNOWFLAKE_PRIVATE_KEY }}" > rsa_key.p8
+
+      - name: Build the production manifest from main
+        working-directory: main-branch
+        run: |
+          dbt deps
+          dbt parse --target prod
+          cp -r target ../prod-state
+
+      - name: Build and test only what changed
+        run: |
+          dbt deps
+          dbt build --target ci --select state:modified+ --defer --state prod-state
+
+      - name: Drop the CI schemas
+        if: always()
+        run: dbt run-operation drop_ci_schemas --target ci

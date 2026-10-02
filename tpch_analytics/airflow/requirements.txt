@@ -1,0 +1,10 @@
+# Tested install for the Airflow environment (series part 8):
+#
+#   pip install "apache-airflow==3.1.8" \
+#     --constraint "https://raw.githubusercontent.com/apache/airflow/constraints-3.1.8/constraints-3.12.txt"
+#   pip install -r airflow/requirements.txt
+#
+# Airflow 3.1 does not work with SQLAlchemy 2.1, hence the pin below.
+astronomer-cosmos==1.15.1
+apache-airflow-providers-snowflake==6.18.0
+sqlalchemy<2.1

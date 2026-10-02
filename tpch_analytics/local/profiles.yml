@@ -1,0 +1,20 @@
+tpch_analytics:
+  target: local
+  outputs:
+    local:
+      type: duckdb
+      path: analytics.duckdb
+      schema: dev
+      attach:
+        - path: raw.duckdb
+          alias: raw
+    ci:
+      type: duckdb
+      path: ci.duckdb
+      schema: ci_pr_7
+      attach:
+        - path: raw.duckdb
+          alias: raw
+        - path: analytics.duckdb
+          alias: analytics
+          read_only: true
