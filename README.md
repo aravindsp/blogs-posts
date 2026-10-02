@@ -1,6 +1,6 @@
 # blogs-posts
 
-A collection of blog posts by Aravind Pillai, written in Markdown.
+A collection of blog posts, written in Markdown.
 
 ## Structure
 
